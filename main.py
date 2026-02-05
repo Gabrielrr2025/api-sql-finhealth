@@ -6,6 +6,7 @@ from datetime import date
 
 app = FastAPI()
 
+# Libera acesso para qualquer frontend (Base44, navegador, etc.)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,13 +16,17 @@ app.add_middleware(
 
 def get_conn():
     return psycopg2.connect(
-        host=os.getenv("POSTGRES_HOST"),
-        database=os.getenv("POSTGRES_DB"),
-        user=os.getenv("POSTGRES_USER"),
-        password=os.getenv("POSTGRES_PASSWORD"),
-        port=5432,
+        host=os.environ["POSTGRES_HOST"],
+        port=int(os.environ["POSTGRES_PORT"]),
+        user=os.environ["POSTGRES_USER"],
+        password=os.environ["POSTGRES_PASSWORD"],
+        dbname=os.environ["POSTGRES_DB"],
         sslmode="require"
     )
+
+@app.get("/")
+def root():
+    return {"status": "API online"}
 
 @app.get("/movimentacoes")
 def movimentacoes(
@@ -52,7 +57,4 @@ def movimentacoes(
     cur.close()
     conn.close()
 
-    return [
-        dict(zip(columns, row))
-        for row in rows
-    ]
+    return [dict(zip(columns, row)) for row in rows]
